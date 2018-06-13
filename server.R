@@ -1,16 +1,34 @@
 library(shiny)
 library(dplyr)
-library(shinyBS)
+library(gridExtra)
+
+options(shiny.maxRequestSize=150*1024^2)
+
 server <- function(input,output, session) {
   INTERACTIONS <- c('like','assumedLike','love','wow','haha','sad','angry')
   SHARES <- c('retweet','share')
   library(DT) 
   library(ggplot2) 
   
+  hasCategories <- reactiveVal(value = T,label='hasCategories')
+  
   getDataset <- reactive({
     groupid = input$groupid
-    dataset <- read.csv(paste0('../fashionista/exploratory/data/',groupid,'/',groupid,'-12H.csv'),stringsAsFactors = F)
-    dataset$date <- as.POSIXct(dataset$date,tz = 'UTC')
+    if(is.null(input$timeseriesfile)) return(NULL)
+    #dataset <- read.csv(paste0('../fashionista/exploratory/data/',groupid,'/',groupid,'-12H.csv'),stringsAsFactors = F)
+    dataset <- read.csv(input$timeseriesfile$datapath,stringsAsFactors = F)
+    
+    dataset$date <- as.POSIXct(dataset$date,tz = 'UTC',format = '%Y-%m-%d %H:%M:%S')
+    
+    if(all(is.na(dataset$date))){
+      stop('Error parsing date column')
+    }
+    
+    if(is.null(dataset$category)){
+      warning('Category not found, assuming one category')
+      hasCategories(FALSE)
+    }
+    
     twelve_hours <- data.frame(date = seq.POSIXt(min(dataset$date), max(dataset$date), by="12 h"))
     full_df <- full_join(dataset,twelve_hours) %>% mutate_each(funs(ifelse(is.na(.),0,.)))%>% arrange(date)
     full_df$date <- as.POSIXct(full_df$date,tz='UTC',origin = "1970-01-01")
@@ -19,6 +37,9 @@ server <- function(input,output, session) {
   })
   
   getCategoryDataset <- reactive({
+    if(hasCategories()==FALSE){
+      return(getDataset())
+    }
     cate <- input$category
     if(is.null(cate)) return(NULL)
     
@@ -35,9 +56,9 @@ server <- function(input,output, session) {
     maxi = as.POSIXct(max(dataset$date),origin = '1970-01-01',tz = 'UTC')
     
     #mini = dataset[1,'start']
-    threeMonthsAgo <- maxi - 60*60*24*90 # last 3 months
-    minValueToShow <- as.POSIXct(ifelse(threeMonthsAgo > mini,threeMonthsAgo,mini),origin = '1970-01-01',tz = 'UTC')
-    s <- sliderInput("slider","Time range",min = mini,max = maxi,value = c(minValueToShow,maxi),step = 1)
+    #threeMonthsAgo <- maxi - 60*60*24*90 # last 3 months
+    #minValueToShow <- as.POSIXct(ifelse(threeMonthsAgo > mini,threeMonthsAgo,mini),origin = '1970-01-01',tz = 'UTC')
+    s <- sliderInput("slider","Time range",min = mini,max = maxi,value = c(mini,maxi),step = 1,width = 400)
     s
   })
   
@@ -64,12 +85,18 @@ server <- function(input,output, session) {
   })
   
   getRawData <- reactive({
-    groupid <- input$groupid
     cate <- input$category
     
-    raw <- read.csv(paste0('../fashionista/exploratory/data/',groupid,'/',groupid,'-raw.csv'),stringsAsFactors = F)
-    raw$date <- as.POSIXct(raw$date_hour_res,tz = 'UTC',format = '%Y-%m-%d %H:%M')
-    raw <- raw %>% filter(category == cate)
+    if(is.null(input$rawfile)) return(NULL)
+    
+    #raw <- read.csv(paste0('../fashionista/exploratory/data/',groupid,'/',groupid,'-raw.csv'),stringsAsFactors = F)
+    raw <- read.csv(input$rawfile$datapath,stringsAsFactors = F)
+    raw <- raw %>% filter(date !=  "" & !is.na(date))
+    raw <- raw[complete.cases(raw$date)]
+    raw$date <- as.POSIXct(raw$date_hour_res,tz = 'UTC',format = '%Y-%m-%d %H:%M:%S')
+    if(hasCategories() == FALSE){
+      raw <- raw %>% filter(category == cate)
+    }
     
     raw
   })
@@ -79,6 +106,7 @@ server <- function(input,output, session) {
     if(is.null(lastclicked)) return(NULL)
     
     raw <- getRawData()
+    if(is.null(raw)) return(NULL)
     selected <- selectedPoints()
     if(is.null(selected)) return(NULL)
     
@@ -116,10 +144,9 @@ server <- function(input,output, session) {
   
   
   output$category <- renderUI({
+    req(input$timeseriesfile)
     dataset <- getDataset()
-    if(is.null(dataset)){
-      return(NULL)
-    }
+    if(is.null(dataset)) return(NULL)
     selectInput("category", "Choose category:", as.list(unique(dataset$category)),selected = unique(dataset$category)[1],multiple = F) 
   })
   
@@ -139,26 +166,46 @@ server <- function(input,output, session) {
   
   output$allplot <- renderPlot({
     
+    if(hasCategories()==FALSE){
+      stop('This plot only shows multiple categories. Data is assumed to have only one.')
+      
+    }
+    
     dataset <- getTimeFilteredDataset()
+    if(is.null(dataset)) return(NULL)
     categoryDataset <- getTimeFilteredCategoryDataset()
+    if(is.null(categoryDataset)) return(NULL)
     minDate = min(categoryDataset$date)
     maxDate = min(categoryDataset$date)
     categories <- table(dataset$category)
     categories <- categories[categories > input$minPerCategory]
-    
-    dataset <- dataset %>% filter(category %in% names(categories))
+    categories2 <- setdiff(names(categories),input$category)
+    dataset <- dataset %>% filter(category %in% categories2)
     
     if(nrow(dataset) == 0) return(NULL)
     
-    dataset %>%
+    thisplot <- categoryDataset %>%
+      ggplot(aes(date, itemWeightSum)) +
+      #geom_point(color = "#2c3e50", alpha = 0.5) +
+      geom_point(stat="identity") +
+      facet_grid(category ~.) + 
+      ggtitle(paste0('Current category: ',input$category)) + 
+      theme(axis.text.x = element_text(angle = 90, hjust = 1)) +
+      scale_y_continuous(labels = scales::comma) + scale_x_datetime(date_breaks = '1 day')#,limits = c(minDate,maxDate))
+    
+    
+    allplot <- dataset %>%
       ggplot(aes(date, itemWeightSum)) +
       #geom_point(color = "#2c3e50", alpha = 0.5) +
       geom_point(stat="identity") +
       facet_grid(category ~. , scales = 'free') +
       theme(axis.text.x = element_text(angle = 90, hjust = 1)) +
+      ggtitle(paste0("All other categories with more than ",input$minPerCategory, " values")) + 
       scale_y_continuous(labels = scales::comma) + scale_x_datetime(date_breaks = '1 day')#,limits = c(minDate,maxDate))
     
-  }, height = 600)
+    grid.arrange(thisplot, allplot, ncol = 1,nrow = 2,heights = c(300,900))
+    
+  }, height = 1200)
   
   
   
@@ -173,46 +220,7 @@ server <- function(input,output, session) {
   
   
   output$mydownload <- downloadHandler(
-    filename = paste0(input$groupid,'-',input$category,'-labels.csv'),
+    filename <- paste0(gsub(".csv",replacement = "",input$timeseriesfile$name),'-',input$category,'-labels.csv'),
     content = function(filename) {write.csv(selectedPoints(), filename)}
   )
 }
-
-ui <- fluidPage(
-  h1('Taganomaly - Anomaly detection labeling tool'),
-  h2('Tag events on a time series for different categories (multiple time series)'),
-  
-  fluidRow(
-    column(3,
-           textInput('groupid','groupid',value = 'corona')
-    ),
-    column(3,
-           uiOutput("category")
-    ),
-    column(3,
-           uiOutput('slider')
-    )
-  ),
-  
-  h5('Instructions: select groupid and category, then select points on plot. Once you decide that these are actual anomalies, save the resulting table to csv and continue to the next category.'),
-  
-  h2('events per 12 hours:'),
-  
-  plotOutput("plot", brush = "user_brush"),
-  h2('Selected points:'),
-  dataTableOutput("summaryTable"),
-  
-  downloadButton(outputId = "mydownload", label = "Download labels set"),
-  h2('Inspect raw data:'),
-  dataTableOutput("rawtable"),
-  
-  h2('Inspect all other categories:'),
-  numericInput('minPerCategory','Minimum samples for being a major category',min = 0,value = 100),
-  bsCollapse(id = "collapseExample", open = "Panel 1",
-             #bsCollapsePanel("Panel 1", "Category time series plot",,
-             bsCollapsePanel("All major categories", "",plotOutput("allplot")
-             ))
-  
-)
-
-shinyApp(ui = ui, server = server)

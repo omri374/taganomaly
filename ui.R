@@ -1,0 +1,77 @@
+library(shiny)
+library(DT)
+library(ggplot2)
+library(shinythemes)
+library(shinydashboard)
+
+header <- dashboardHeader(title = 'Taganomaly - Anomaly detection labeling tool',
+                          dropdownMenu(
+                            type = "notifications", 
+                            icon = icon("question-circle"),
+                            badgeStatus = NULL,
+                            headerText = 
+                              helpText(HTML('<U>Instructions:</U> <P>
+                <B>1. Import time series CSV file</B>. Assumed structure: <BR>
+                          - date ("%Y-%m-%d %H:%M:%S")<BR>
+                          - category<BR>
+                          - value</P><P>
+                <B>2. (Optional) Import raw data time series CSV file</B>.</P><P>
+                          If the original time series is an aggreation over time windows, this time series is the raw values themselves. This way we could dive deeper into an anomalous value and see what it is comprised of.<BR>
+                          Assumed structure: <BR>
+                          - date ("%Y-%m-%d %H:%M:%S")<BR>
+                          - category<BR>
+                          - value</P><P></P><P>
+                <B>2. Select category</B> (if exists)</P><P>
+                <B>3. Select time range on slider</B></P><P>
+                <B>4.Select points on plot that look anomalous</B>.
+                <BR>Optional (1): click on one time range on the table below the plot to see raw data on this time range
+                <BR>Optional (2): Open the "All Categories" tab to see how other time series behave on the same time range.
+                <BR><B>5.</B> Once you decide that these are actual anomalies, save the resulting table to csv by clicking on "Download labels set" and continue to the next category.</P>'
+                              )))
+)
+
+sidebar <- dashboardSidebar(
+  sidebarMenu(
+    fileInput("timeseriesfile", "Choose CSV File with counts per time frame",
+              accept = c(
+                "text/csv",
+                "text/comma-separated-values,text/plain",
+                ".csv")
+    ),
+    fileInput("rawfile", "Choose CSV File with raw data",
+              accept = c(
+                "text/csv",
+                "text/comma-separated-values,text/plain",
+                ".csv")
+    ),
+    uiOutput("category"),
+    uiOutput('slider'),
+    
+    downloadButton(outputId = "mydownload", label = "Download labels set")
+  )
+)
+
+body <- dashboardBody(
+    tabsetPanel(
+      tabPanel("Time Series",
+               h2('Time Series for labeling:'),
+               plotOutput("plot", brush = "user_brush"),
+               h2('Selected points:'),
+               dataTableOutput("summaryTable"),
+               h2('Inspect raw data:'),
+               dataTableOutput("rawtable")
+      ),
+      tabPanel('All categories',
+               h2('Inspect all other categories:'),
+               numericInput('minPerCategory','Minimum samples for being a major category',min = 0,value = 100),
+               plotOutput("allplot")
+      )
+    )
+
+      
+
+)
+
+
+dashboardPage(header, sidebar, body)
+
