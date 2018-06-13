@@ -11,12 +11,11 @@ server <- function(input,output, session) {
   library(ggplot2) 
   
   hasCategories <- reactiveVal(value = T,label='hasCategories')
+  outputFileName <- reactiveVal(value = '',label='outputFileName')
   
   getDataset <- reactive({
-    groupid = input$groupid
     if(is.null(input$timeseriesfile)) return(NULL)
-    #dataset <- read.csv(paste0('../fashionista/exploratory/data/',groupid,'/',groupid,'-12H.csv'),stringsAsFactors = F)
-    dataset <- read.csv(input$timeseriesfile$datapath,stringsAsFactors = F)
+        dataset <- read.csv(input$timeseriesfile$datapath,stringsAsFactors = F)
     
     dataset$date <- as.POSIXct(dataset$date,tz = 'UTC',format = '%Y-%m-%d %H:%M:%S')
     
@@ -89,11 +88,8 @@ server <- function(input,output, session) {
     
     if(is.null(input$rawfile)) return(NULL)
     
-    #raw <- read.csv(paste0('../fashionista/exploratory/data/',groupid,'/',groupid,'-raw.csv'),stringsAsFactors = F)
     raw <- read.csv(input$rawfile$datapath,stringsAsFactors = F)
-    raw <- raw %>% filter(date !=  "" & !is.na(date))
-    raw <- raw[complete.cases(raw$date)]
-    raw$date <- as.POSIXct(raw$date_hour_res,tz = 'UTC',format = '%Y-%m-%d %H:%M:%S')
+    raw$date <- as.POSIXct(strptime(raw$date,format = "%Y-%m-%d %H:%M:%S",tz = 'UTC'))
     if(hasCategories() == FALSE){
       raw <- raw %>% filter(category == cate)
     }
@@ -115,7 +111,7 @@ server <- function(input,output, session) {
     #get only this window
     
     
-    raw <- raw %>% filter(date >= sampleDate & date < sampleDate + 12*60*60)
+    raw <- raw %>% filter(date >= sampleDate & date < sampleDate + 12*60*60, category == input$category)
     
     
     if(!is.null(raw$parent)){
@@ -220,7 +216,11 @@ server <- function(input,output, session) {
   
   
   output$mydownload <- downloadHandler(
-    filename <- paste0(gsub(".csv",replacement = "",input$timeseriesfile$name),'-',input$category,'-labels.csv'),
-    content = function(filename) {write.csv(selectedPoints(), filename)}
+    filename = function(){
+      paste0(gsub(".csv",replacement = "",input$timeseriesfile$name),'-',input$category,'-labels.csv')
+    },
+    content = function(file) {
+      write.csv(selectedPoints(),file)
+    }
   )
 }
