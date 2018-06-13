@@ -45,6 +45,7 @@ sidebar <- dashboardSidebar(
                 ".csv")
     ),
     uiOutput("category"),
+    selectInput('breaks',"Select graph breaks",choices = c('1 sec','1 min','1 hour','1 day','1 week','1 month','1 year'),selected = '1 day'),
     uiOutput('slider'),
     
     downloadButton(outputId = "mydownload", label = "Download labels set")
@@ -53,7 +54,7 @@ sidebar <- dashboardSidebar(
 
 body <- dashboardBody(
     tabsetPanel(
-      tabPanel("Time Series",
+      tabPanel("Current category",
                h2('Time Series for labeling:'),
                plotOutput("plot", brush = "user_brush"),
                h2('Selected points:'),
@@ -65,6 +66,11 @@ body <- dashboardBody(
                h2('Inspect all other categories:'),
                numericInput('minPerCategory','Minimum samples for being a major category',min = 0,value = 100),
                plotOutput("allplot")
+      ),
+      tabPanel('Category distribution over time',
+               h2('Inspect change in distribution over time:'),
+               numericInput('minPerCategoryDist','Minimum samples for being a major category',min = 0,value = 100),
+               plotOutput('alldistributions')
       )
     )
 

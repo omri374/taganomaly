@@ -80,7 +80,7 @@ server <- function(input,output, session) {
   
   selectedPoints <- reactive({
     user_brush <- input$user_brush
-    brushedPoints(getTimeFilteredCategoryDataset(), user_brush, xvar = "date", yvar = "itemWeightSum")
+    brushedPoints(getTimeFilteredCategoryDataset(), user_brush, xvar = "date", yvar = "value")
   })
   
   getRawData <- reactive({
@@ -149,13 +149,13 @@ server <- function(input,output, session) {
   output$plot <- renderPlot({
     categoryDataset <- getTimeFilteredCategoryDataset()
     if(is.null(categoryDataset)) return(NULL)
-    ggplot(categoryDataset, aes(date, itemWeightSum)) +
+    ggplot(categoryDataset, aes(date, value)) +
       geom_point(size = 3) +
       geom_line() + 
       #geom_smooth(method = lm, formula = formula, fullrange = TRUE, color = "gray50") +
       #geom_point(data = exclude, fill = NA, color = "black", size = 3, alpha = 0.25) +
       scale_y_continuous(labels = scales::comma) + 
-      scale_x_datetime(date_breaks = '1 day') + 
+      scale_x_datetime(date_breaks = input$breaks) + 
       #coord_cartesian(xlim = range(data[[xvar]]), ylim = range(data[[yvar]])) +
       theme(axis.text.x = element_text(angle = 90, hjust = 1))
   })
@@ -163,7 +163,7 @@ server <- function(input,output, session) {
   output$allplot <- renderPlot({
     
     if(hasCategories()==FALSE){
-      stop('This plot only shows multiple categories. Data is assumed to have only one.')
+      stop('This plot only shows multiple categories. No categories found in the data. Did you add a "category" column to the provided file?.')
       
     }
     
@@ -173,33 +173,55 @@ server <- function(input,output, session) {
     if(is.null(categoryDataset)) return(NULL)
     minDate = min(categoryDataset$date)
     maxDate = min(categoryDataset$date)
-    categories <- table(dataset$category)
-    categories <- categories[categories > input$minPerCategory]
-    categories2 <- setdiff(names(categories),input$category)
-    dataset <- dataset %>% filter(category %in% categories2)
+    categories <- dataset %>% group_by(category) %>% summarise(perCat = sum(value))
+    categories <- categories[categories$perCat > input$minPerCategoryDist,'category'] %>% unlist()
+    dataset <- dataset %>% filter(category %in% categories & category != input$category)
     
     if(nrow(dataset) == 0) return(NULL)
     
     thisplot <- categoryDataset %>%
-      ggplot(aes(date, itemWeightSum)) +
+      ggplot(aes(date, value)) +
       #geom_point(color = "#2c3e50", alpha = 0.5) +
       geom_point(stat="identity") +
       facet_grid(category ~.) + 
       ggtitle(paste0('Current category: ',input$category)) + 
       theme(axis.text.x = element_text(angle = 90, hjust = 1)) +
-      scale_y_continuous(labels = scales::comma) + scale_x_datetime(date_breaks = '1 day')#,limits = c(minDate,maxDate))
+      scale_y_continuous(labels = scales::comma) + scale_x_datetime(date_breaks = input$breaks)#,limits = c(minDate,maxDate))
     
     
     allplot <- dataset %>%
-      ggplot(aes(date, itemWeightSum)) +
+      ggplot(aes(date, value)) +
       #geom_point(color = "#2c3e50", alpha = 0.5) +
       geom_point(stat="identity") +
       facet_grid(category ~. , scales = 'free') +
       theme(axis.text.x = element_text(angle = 90, hjust = 1)) +
       ggtitle(paste0("All other categories with more than ",input$minPerCategory, " values")) + 
-      scale_y_continuous(labels = scales::comma) + scale_x_datetime(date_breaks = '1 day')#,limits = c(minDate,maxDate))
+      scale_y_continuous(labels = scales::comma) + scale_x_datetime(date_breaks = input$breaks)#,limits = c(minDate,maxDate))
     
     grid.arrange(thisplot, allplot, ncol = 1,nrow = 2,heights = c(300,900))
+    
+  }, height = 1200)
+  
+  output$alldistributions <- renderPlot({
+    if(hasCategories()==FALSE){
+      stop('This plot only shows multiple categories. No categories found in the data. Did you add a "category" column to the provided file?.')
+      
+    }
+    
+    dataset <- getTimeFilteredDataset()
+    if(is.null(dataset)) return(NULL)
+    categoryDataset <- getTimeFilteredCategoryDataset()
+    if(is.null(categoryDataset)) return(NULL)
+    minDate = min(categoryDataset$date)
+    maxDate = min(categoryDataset$date)
+    categories <- dataset %>% group_by(category) %>% summarise(perCat = sum(value))
+    categories <- categories[categories$perCat > input$minPerCategoryDist,'category'] %>% unlist()
+    dataset <- dataset %>% filter(category %in% unique(c(categories,input$category)))
+    
+    if(nrow(dataset) == 0) stop('no data found')
+    
+    ggplot(dataset,aes(x = date, y = value,fill = category))+ ggtitle("Distribution of counts per category") + 
+      geom_bar(position = "fill",stat = "identity")+ scale_x_datetime(date_breaks = input$breaks) + scale_colour_gradientn(colours=rainbow(4)) + coord_flip()
     
   }, height = 1200)
   
