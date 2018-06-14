@@ -239,7 +239,8 @@ server <- function(input,output, session) {
   
   output$mydownload <- downloadHandler(
     filename = function(){
-      paste0(gsub(".csv",replacement = "",input$timeseriesfile$name),'-',input$category,'-labels.csv')
+      random_string <- paste0(paste0(sample(LETTERS,2 , TRUE),collapse=''),sample(999, 1, TRUE), paste0(sample(LETTERS,2 , TRUE),collapse=''),collapse = '')
+      paste0(gsub(".csv",replacement = "",input$timeseriesfile$name),'-',input$category,'-',random_string,'-labels.csv')
     },
     content = function(file) {
       write.csv(selectedPoints(),file)
