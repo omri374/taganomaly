@@ -45,7 +45,7 @@ sidebar <- dashboardSidebar(
                 ".csv")
     ),
     uiOutput("category"),
-    selectInput('breaks',"Select graph breaks",choices = c('1 sec','1 min','1 hour','1 day','1 week','1 month','1 year'),selected = '1 day'),
+    selectInput('breaks',"Select graph breaks",choices = c('1 sec','1 min','1 hour','1 day','1 week','1 month','1 year'),selected = '1 hour'),
     uiOutput('slider'),
     
     downloadButton(outputId = "mydownload", label = "Download labels set")

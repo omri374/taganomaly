@@ -12,24 +12,37 @@ server <- function(input,output, session) {
   
   hasCategories <- reactiveVal(value = T,label='hasCategories')
   outputFileName <- reactiveVal(value = '',label='outputFileName')
+  timeSeriesGap <- reactiveVal(value = 12*60*60)
+  
   
   getDataset <- reactive({
     if(is.null(input$timeseriesfile)) return(NULL)
         dataset <- read.csv(input$timeseriesfile$datapath,stringsAsFactors = F)
     
     dataset$date <- as.POSIXct(dataset$date,tz = 'UTC',format = '%Y-%m-%d %H:%M:%S')
-    
+
     if(all(is.na(dataset$date))){
       stop('Error parsing date column')
     }
     
+
     if(is.null(dataset$category)){
       warning('Category not found, assuming one category')
       hasCategories(FALSE)
+      ## Setup the time series gap
+      dataset <- dataset %>% arrange(date)
+      timeSeriesGap(diff(as.numeric(dataset$date))[1])
+      
+    } else{
+      ## Setup the time series gap
+      oneCategory <- dataset %>% filter(category == dataset[1,'category']) %>% arrange(date)
+      timeSeriesGap(diff(as.numeric(oneCategory$date))[1])
     }
     
-    twelve_hours <- data.frame(date = seq.POSIXt(min(dataset$date), max(dataset$date), by="12 h"))
-    full_df <- full_join(dataset,twelve_hours) %>% mutate_each(funs(ifelse(is.na(.),0,.)))%>% arrange(date)
+    
+    
+    pad <- data.frame(date = seq(from = min(dataset$date),to = max(dataset$date),by = timeSeriesGap()))
+    full_df <- full_join(dataset,pad) %>% mutate_each(funs(ifelse(is.na(.),0,.)))%>% arrange(date)
     full_df$date <- as.POSIXct(full_df$date,tz='UTC',origin = "1970-01-01")
     full_df$sampleId <- 1:nrow(full_df)
     full_df
@@ -111,7 +124,7 @@ server <- function(input,output, session) {
     #get only this window
     
     
-    raw <- raw %>% filter(date >= sampleDate & date < sampleDate + 12*60*60, category == input$category)
+    raw <- raw %>% filter(date >= sampleDate & date < sampleDate + timeSeriesGap(), category == input$category)
     
     
     if(!is.null(raw$parent)){
