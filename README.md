@@ -1,5 +1,29 @@
 # taganomaly
-Anomaly detection labeling tool, specifically for multiple time series (one time series per category)
+Anomaly detection labeling tool, specifically for multiple time series (one time series per category).
+
+Taganamoly is a tool for creating labeled data for anomaly detection models. It allows the labeler to select points on a time series, further inspect them by looking at the behavior of other times series at the same time range, or by looking at the raw data that created this time series (assuming that the time series is an aggregated metric, counting events per time range)
+
+The app has three main windows:
+#### The labeling window
+![UI](https://github.com/omri374/eventsVis/raw/master/assets/ui.png)
+##### Time series labeling window
+![Time series](https://github.com/omri374/eventsVis/raw/master/assets/ts.png)
+
+##### Selected points table view
+![Selected points](https://github.com/omri374/eventsVis/raw/master/assets/selected.png)
+
+##### View raw data for window (if exists)
+![Detailed data](https://github.com/omri374/eventsVis/raw/master/assets/detailed.png)
+
+
+#### Compare this category with others over time
+![Compare](https://github.com/omri374/eventsVis/raw/master/assets/compare.png)
+
+
+#### Look at the changes in distribution between categories
+This could be useful to understand whether an anomaly was univariate or multivariate
+![Distribution comparison](https://github.com/omri374/eventsVis/raw/master/assets/dist.png)
+
 
 
 ## Requirements
