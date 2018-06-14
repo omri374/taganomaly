@@ -6,13 +6,13 @@ Taganamoly is a tool for creating labeled data for anomaly detection models. It 
 The app has three main windows:
 #### The labeling window
 ![UI](https://github.com/omri374/taganomaly/raw/master/assets/ui.png)
-##### Time series labeling window
+###### Time series labeling
 ![Time series](https://github.com/omri374/taganomaly/raw/master/assets/ts.png)
 
-##### Selected points table view
+###### Selected points table view
 ![Selected points](https://github.com/omri374/taganomaly/raw/master/assets/selected.png)
 
-##### View raw data for window (if exists)
+###### View raw data for window (if exists)
 ![Detailed data](https://github.com/omri374/taganomaly/raw/master/assets/detailed.png)
 
 
