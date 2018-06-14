@@ -102,7 +102,7 @@ server <- function(input,output, session) {
     if(is.null(lastclicked)) return(NULL)
     
     raw <- getRawData()
-    if(is.null(raw)) return(NULL)
+    if(is.null(raw)) stop('No raw data found for further inspection')
     selected <- selectedPoints()
     if(is.null(selected)) return(NULL)
     
@@ -142,6 +142,7 @@ server <- function(input,output, session) {
   output$category <- renderUI({
     req(input$timeseriesfile)
     dataset <- getDataset()
+    dataset <- dataset %>% filter(category != '0' & category != 0)
     if(is.null(dataset)) return(NULL)
     selectInput("category", "Choose category:", as.list(unique(dataset$category)),selected = unique(dataset$category)[1],multiple = F) 
   })
@@ -174,31 +175,38 @@ server <- function(input,output, session) {
     minDate = min(categoryDataset$date)
     maxDate = min(categoryDataset$date)
     categories <- dataset %>% group_by(category) %>% summarise(perCat = sum(value))
-    categories <- categories[categories$perCat > input$minPerCategoryDist,'category'] %>% unlist()
+    categories <- categories[categories$perCat > input$minPerCategory,'category'] %>% unlist()
     dataset <- dataset %>% filter(category %in% categories & category != input$category)
+    
+    twelve_hours <- data.frame(date = seq.POSIXt(min(categoryDataset$date), max(categoryDataset$date), by="12 h"))
+    categoryDataset <- full_join(categoryDataset,twelve_hours) %>% mutate_each(funs(ifelse(is.na(.),0,.)))%>% arrange(date)
+    categoryDataset$date <- as.POSIXct(categoryDataset$date,tz='UTC',origin = "1970-01-01")
     
     if(nrow(dataset) == 0) return(NULL)
     
-    thisplot <- categoryDataset %>%
+    thisplot <- categoryDataset %>% filter(category == input$category) %>%
       ggplot(aes(date, value)) +
       #geom_point(color = "#2c3e50", alpha = 0.5) +
-      geom_point(stat="identity") +
+      geom_line(stat="identity") +
       facet_grid(category ~.) + 
       ggtitle(paste0('Current category: ',input$category)) + 
       theme(axis.text.x = element_text(angle = 90, hjust = 1)) +
-      scale_y_continuous(labels = scales::comma) + scale_x_datetime(date_breaks = input$breaks)#,limits = c(minDate,maxDate))
+      scale_y_continuous(labels = scales::comma) + 
+      theme(axis.title.x=element_blank(),
+            axis.text.x=element_blank(),
+            axis.ticks.x=element_blank())
     
     
     allplot <- dataset %>%
       ggplot(aes(date, value)) +
       #geom_point(color = "#2c3e50", alpha = 0.5) +
-      geom_point(stat="identity") +
+      geom_line(stat="identity") +
       facet_grid(category ~. , scales = 'free') +
       theme(axis.text.x = element_text(angle = 90, hjust = 1)) +
       ggtitle(paste0("All other categories with more than ",input$minPerCategory, " values")) + 
       scale_y_continuous(labels = scales::comma) + scale_x_datetime(date_breaks = input$breaks)#,limits = c(minDate,maxDate))
     
-    grid.arrange(thisplot, allplot, ncol = 1,nrow = 2,heights = c(300,900))
+    grid.arrange(thisplot, allplot, ncol = 1,nrow = 2,heights = c(200,1000))
     
   }, height = 1200)
   
@@ -234,7 +242,7 @@ server <- function(input,output, session) {
   )
   
   output$rawtable<-DT::renderDataTable(data_to_display(),options = list(
-    pageLength = 25))
+    pageLength = 25,order = list(list(1, 'asc'))))
   
   
   output$mydownload <- downloadHandler(
