@@ -32,17 +32,18 @@ This could be useful to understand whether an anomaly was univariate or multivar
 - shiny
 - dplyr
 - gridExtra
-- shinyDashboard
+- shinydashboard
 - DT
 - ggplot2
 
 
-packages should be installed upon start if missing (see [global.R])
+packages will be installed upon start if missing (see [global.R]). This might take a few minutes upon the first run.
 
 ## How to run:
 This tool uses the [shiny framework](https://shiny.rstudio.com/) for visualizing events.
 In order to run it, you need to have [R](https://mran.microsoft.com/download) and preferably [Rstudio](https://www.rstudio.com/products/rstudio/download/).
 Once you have everything installed, open the project on R studio and click "Run App", or call runApp() from the console.
+
 
 ## Instructions
 1. Import time series CSV file. Assumed structure:
