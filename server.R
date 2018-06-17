@@ -124,7 +124,7 @@ server <- function(input,output, session) {
     if(selectedRow > nrow(categoryDataset)){
       nextSampleDate <- selected$date + timeSeriesGap()
     } else{
-      nextSampleDate <- categoryDataset[selectedRow,'date']
+      nextSampleDate <- categoryDataset[selectedRow+1,'date']
     }
     if(is.null(selected)) return(NULL)
     
