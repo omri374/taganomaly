@@ -39,13 +39,16 @@ This could be useful to understand whether an anomaly was univariate or multivar
 
 packages will be installed upon start if missing (see [global.R]). This might take a few minutes upon the first run.
 
-## How to run:
+## How to run locally:
 This tool uses the [shiny framework](https://shiny.rstudio.com/) for visualizing events.
 In order to run it, you need to have [R](https://mran.microsoft.com/download) and preferably [Rstudio](https://www.rstudio.com/products/rstudio/download/).
 Once you have everything installed, open the project on R studio and click "Run App", or call runApp() from the console.
 
+## How to deploy using docker:
+Tested with [rize](https://github.com/cole-brokamp/rize). Follow the steps on [rize](https://github.com/cole-brokamp/rize) on how to deploy on shiny-server. Default port is 3838, so make sure you have it open or change the default port to somethine else.
 
-## Instructions
+
+## Instructions of use
 1. Import time series CSV file. Assumed structure:
 - date ("%Y-%m-%d %H:%M:%S")
 - category
@@ -67,3 +70,7 @@ Assumed structure:
 Optional (1): click on one time range on the table below the plot to see raw data on this time range
 Optional (2): Open the "All Categories" tab to see how other time series behave on the same time range.
 5. Once you decide that these are actual anomalies, save the resulting table to csv by clicking on "Download labels set" and continue to the next category.
+
+#### Current limitations/issues
+It is currently impossible to have multiple selections on one plot. A workaround is to select one area, download the csv and select the next area. Each downloaded CSV has a random string so files aren't supposed to override each other.
+
