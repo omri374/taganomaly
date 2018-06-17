@@ -31,7 +31,7 @@ server <- function(input,output, session) {
       hasCategories(FALSE)
       ## Setup the time series gap
       dataset <- dataset %>% arrange(date)
-      timeSeriesGap(diff(as.numeric(dataset$date))[1])
+      timeSeriesGap(median(diff(as.numeric(dataset$date))))
       
     } else{
       ## Setup the time series gap
@@ -117,6 +117,15 @@ server <- function(input,output, session) {
     raw <- getRawData()
     if(is.null(raw)) stop('No raw data found for further inspection')
     selected <- selectedPoints()
+    
+    categoryDataset <- getTimeFilteredCategoryDataset()
+    
+    selectedRow <- which(categoryDataset$date == selected[lastclicked,'date'])
+    if(selectedRow > nrow(categoryDataset)){
+      nextSampleDate <- selected$date + timeSeriesGap()
+    } else{
+      nextSampleDate <- categoryDataset[selectedRow,'date']
+    }
     if(is.null(selected)) return(NULL)
     
     sampleDate <- selected[lastclicked,'date']
@@ -124,7 +133,7 @@ server <- function(input,output, session) {
     #get only this window
     
     
-    raw <- raw %>% filter(date >= sampleDate & date < sampleDate + timeSeriesGap(), category == input$category)
+    raw <- raw %>% filter(date >= sampleDate & date < nextSampleDate, category == input$category)
     
     
     if(!is.null(raw$parent)){
@@ -248,7 +257,7 @@ server <- function(input,output, session) {
   
   
   
-  output$summaryTable <- DT::renderDataTable(expr = {DT::datatable(selectedPoints())})
+  output$summaryTable <- DT::renderDataTable(expr = {DT::datatable(selectedPoints())}, selection = 'single')
   
   data_to_display<-eventReactive(input$summaryTable_rows_selected,ignoreNULL=TRUE,
                                  getRawDataForSample()
