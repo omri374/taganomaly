@@ -56,7 +56,7 @@ server <- function(input,output, session) {
   })
   
   observe({
-    dataset <- getDataset()
+    dataset <- getTimeFilteredCategoryDataset()
     if(is.null(dataset)) return(NULL)
     mini <- min(dataset$date)
     maxi <- max(dataset$date)
@@ -313,6 +313,16 @@ server <- function(input,output, session) {
       if(is.null(dataset)) stop('no dataset found.')
       res <- find_anomalies_twitter(dataset)
       res$plot
+    },message = 'Finding anomalies...')
+  })
+  
+  output$facebookanomalies <- renderPlot({
+    withProgress({
+      source("R/anomaly_detection.R")
+      dataset <- getTimeFilteredCategoryDataset()
+      if(is.null(dataset)) stop('no dataset found.')
+      res <- find_anomalies_prophet(dataset)
+      plot(res)
     },message = 'Finding anomalies...')
   })
   

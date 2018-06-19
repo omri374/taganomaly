@@ -4,6 +4,8 @@ if(!require(dplyr)) install.packages('dplyr')
 if(!require(ggplot2)) install.packages('ggplot2')
 if(!require(gridExtra)) install.packages('gridExtra')
 if(!require(shinydashboard)) install.packages('shinydashboard')
-
+if(!require(parsedate)) install.packages('parsedate')
+if(!require(anomalyDetection)) install.packages('anomalyDetection')
+if(!require(prophet)) install.packages('prophet')
 
 

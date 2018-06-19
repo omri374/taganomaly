@@ -74,10 +74,18 @@ body <- dashboardBody(
              numericInput('minPerCategoryDist','Minimum samples for being a major category',min = 0,value = 100),
              plotOutput('alldistributions')
     ),
-    tabPanel('Suggested anomalies',
+    tabPanel('Suggested anomalies (Twitter model)',
              h3("Based on Twitter's AnomalyDetection package:"),
              a('https://github.com/twitter/AnomalyDetection/', href = 'https://github.com/twitter/AnomalyDetection/'),
+             h5("Might take a while to load..."),
              plotOutput('twitteranomalies')
+             
+    ),
+    tabPanel('Suggested anomalies (Facebook prophet model)',
+             h3("Based on Facebook's Prophet:"),
+             a('https://facebook.github.io/prophet/', href = 'https://facebook.github.io/prophet/'),
+             h5("Might take a while to load..."),
+             plotOutput('facebookanomalies')
              
     )
   )
