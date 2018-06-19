@@ -316,15 +316,15 @@ server <- function(input,output, session) {
     },message = 'Finding anomalies...')
   })
   
-  output$facebookanomalies <- renderPlot({
-    withProgress({
-      source("R/anomaly_detection.R")
-      dataset <- getTimeFilteredCategoryDataset()
-      if(is.null(dataset)) stop('no dataset found.')
-      res <- find_anomalies_prophet(dataset)
-      plot(res)
-    },message = 'Finding anomalies...')
-  })
+  # output$facebookanomalies <- renderPlot({
+  #   withProgress({
+  #     source("R/anomaly_detection.R")
+  #     dataset <- getTimeFilteredCategoryDataset()
+  #     if(is.null(dataset)) stop('no dataset found.')
+  #     res <- find_anomalies_prophet(dataset)
+  #     plot(res)
+  #   },message = 'Finding anomalies...')
+  # })
   
   output$mydownload <- downloadHandler(
     filename = function(){

@@ -46,10 +46,11 @@ packages will be installed upon start if missing (see [global.R]). This might ta
 ## How to run locally:
 This tool uses the [shiny framework](https://shiny.rstudio.com/) for visualizing events.
 In order to run it, you need to have [R](https://mran.microsoft.com/download) and preferably [Rstudio](https://www.rstudio.com/products/rstudio/download/).
-Once you have everything installed, open the project on R studio and click "Run App", or call runApp() from the console.
+Once you have everything installed, open the project on R studio and click "Run App", or call runApp() from the console. You might need to manually install the required packages
 
 ## How to deploy using docker:
-Tested with [rize](https://github.com/cole-brokamp/rize). Follow the steps on [rize](https://github.com/cole-brokamp/rize) on how to deploy on shiny-server. Default port is 3838, so make sure you have it open or change the default port to somethine else.
+Option 1: [Deploy to Azure Web App for Containers](https://azuredeploy.net/). More details [here](https://azure.microsoft.com/en-us/services/app-service/containers/)
+Option 2: Using the package [rize](https://github.com/cole-brokamp/rize). Follow the steps on [rize](https://github.com/cole-brokamp/rize) on how to deploy on shiny-server. Default port is 3838, so make sure you have it open or change the default port to somethine else.
 
 
 ## Instructions of use
