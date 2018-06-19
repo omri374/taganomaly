@@ -45,6 +45,7 @@ sidebar <- dashboardSidebar(
                 ".csv")
     ),
     uiOutput("category"),
+    checkboxInput('interpolate',label = "Interpolate missing points",value = FALSE),
     selectInput('breaks',"Select graph breaks",choices = c('1 sec','1 min','1 hour','1 day','1 week','1 month','1 year'),selected = '1 hour'),
     uiOutput('slider'),
     
@@ -53,29 +54,36 @@ sidebar <- dashboardSidebar(
 )
 
 body <- dashboardBody(
-    tabsetPanel(
-      tabPanel("Current category",
-               h2('Time Series for labeling:'),
-               plotOutput("plot", brush = "user_brush"),
-               h2('Selected points:'),
-               dataTableOutput("summaryTable"),
-               h2('Inspect raw data:'),
-               dataTableOutput("rawtable")
-      ),
-      tabPanel('All categories',
-               h2('Inspect all other categories:'),
-               numericInput('minPerCategory','Minimum samples for being a major category',min = 0,value = 100),
-               plotOutput("allplot")
-      ),
-      tabPanel('Category distribution over time',
-               h2('Inspect change in distribution over time:'),
-               numericInput('minPerCategoryDist','Minimum samples for being a major category',min = 0,value = 100),
-               plotOutput('alldistributions')
-      )
+  tags$head(tags$style(".shiny-notification {position: fixed; top: 20% ;left: 50%")),
+  tabsetPanel(
+    tabPanel("Current category",
+             h2('Time Series for labeling:'),
+             plotOutput("plot", brush = "user_brush"),
+             h2('Selected points:'),
+             dataTableOutput("summaryTable"),
+             h2('Inspect raw data:'),
+             dataTableOutput("rawtable")
+    ),
+    tabPanel('All categories',
+             h2('Inspect all other categories:'),
+             numericInput('minPerCategory','Minimum samples for being a major category',min = 0,value = 100),
+             plotOutput("allplot")
+    ),
+    tabPanel('Category distribution over time',
+             h2('Inspect change in distribution over time:'),
+             numericInput('minPerCategoryDist','Minimum samples for being a major category',min = 0,value = 100),
+             plotOutput('alldistributions')
+    ),
+    tabPanel('Suggested anomalies',
+             h3("Based on Twitter's AnomalyDetection package:"),
+             a('https://github.com/twitter/AnomalyDetection/', href = 'https://github.com/twitter/AnomalyDetection/'),
+             plotOutput('twitteranomalies')
+             
     )
-
-      
-
+  )
+  
+  
+  
 )
 
 

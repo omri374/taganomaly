@@ -17,15 +17,20 @@ server <- function(input,output, session) {
   
   getDataset <- reactive({
     if(is.null(input$timeseriesfile)) return(NULL)
-        dataset <- read.csv(input$timeseriesfile$datapath,stringsAsFactors = F)
     
-    dataset$date <- as.POSIXct(dataset$date,tz = 'UTC',format = '%Y-%m-%d %H:%M:%S')
-
-    if(all(is.na(dataset$date))){
-      stop('Error parsing date column')
+    dataset <- read.csv(input$timeseriesfile$datapath,stringsAsFactors = F)
+    dataset$new_date <- as.POSIXct(dataset$date,tz = 'UTC',format = '%Y-%m-%d %H:%M:%S')
+    
+    if(all(is.na(dataset$new_date))){
+      warning('Error parsing date column, using parsedate to try parsing the date')
+      library(parsedate)
+      dataset$date <- parse_date(dataset$date)
+    } else{
+      dataset$date <- dataset$new_date
+      dataset$bew_date <- NULL
     }
     
-
+    
     if(is.null(dataset$category)){
       warning('Category not found, assuming one category')
       hasCategories(FALSE)
@@ -40,12 +45,45 @@ server <- function(input,output, session) {
     }
     
     
+    if(input$interpolate){
+      pad <- data.frame(date = seq(from = min(dataset$date),to = max(dataset$date),by = timeSeriesGap()))
+      full_df <- full_join(dataset,pad) %>% mutate_each(funs(ifelse(is.na(.),0,.)))%>% arrange(date)
+      full_df$date <- as.POSIXct(full_df$date,tz='UTC',origin = "1970-01-01")
+      dataset <- full_df
+    }
+    dataset$sampleId <- 1:nrow(dataset)
+    dataset
+  })
+  
+  observe({
+    dataset <- getDataset()
+    if(is.null(dataset)) return(NULL)
+    mini <- min(dataset$date)
+    maxi <- max(dataset$date)
+    diff <- as.numeric(maxi) - as.numeric(mini)
     
-    pad <- data.frame(date = seq(from = min(dataset$date),to = max(dataset$date),by = timeSeriesGap()))
-    full_df <- full_join(dataset,pad) %>% mutate_each(funs(ifelse(is.na(.),0,.)))%>% arrange(date)
-    full_df$date <- as.POSIXct(full_df$date,tz='UTC',origin = "1970-01-01")
-    full_df$sampleId <- 1:nrow(full_df)
-    full_df
+    sel <- '1 day'
+    if(diff < 60){
+      # difference is in seconds
+      sel <- '1 second'
+    } else if(diff < 60*60){
+      sel <- '1 minute'
+    } else if(diff < 60*60*24){
+      sel <- '1 hour'
+    } else if(diff < 60*60*24*7){
+      sel <- '1 day'
+    } else if(diff < 60*60*24*31){
+      sel <- '1 week'
+    } else if(diff < 60*60*24*365){
+      sel <- '1 month'
+    } else{
+      sel <- '1 year'
+    }
+    
+    # Can also set the label and select items
+    updateSelectInput(session, "breaks",
+                      selected = sel
+    )
   })
   
   getCategoryDataset <- reactive({
@@ -60,7 +98,7 @@ server <- function(input,output, session) {
   })
   
   output$slider <- renderUI({
-    dataset <- getCategoryDataset()
+    dataset <- getDataset()
     if(is.null(dataset)) return(NULL)
     dataset <- dataset %>% arrange(date)
     
@@ -165,13 +203,15 @@ server <- function(input,output, session) {
     req(input$timeseriesfile)
     dataset <- getDataset()
     dataset <- dataset %>% filter(category != '0' & category != 0)
-    if(is.null(dataset)) return(NULL)
+    if(is.null(dataset)) return("")
     selectInput("category", "Choose category:", as.list(unique(dataset$category)),selected = unique(dataset$category)[1],multiple = F) 
   })
   
   output$plot <- renderPlot({
+    
     categoryDataset <- getTimeFilteredCategoryDataset()
     if(is.null(categoryDataset)) return(NULL)
+    
     ggplot(categoryDataset, aes(date, value)) +
       geom_point(size = 3) +
       geom_line() + 
@@ -191,9 +231,9 @@ server <- function(input,output, session) {
     }
     
     dataset <- getTimeFilteredDataset()
-    if(is.null(dataset)) return(NULL)
+    if(is.null(dataset)) stop('No dataset found.')
     categoryDataset <- getTimeFilteredCategoryDataset()
-    if(is.null(categoryDataset)) return(NULL)
+    if(is.null(categoryDataset)) stop('No data found for category.')
     minDate = min(categoryDataset$date)
     maxDate = min(categoryDataset$date)
     categories <- dataset %>% group_by(category) %>% summarise(perCat = sum(value))
@@ -204,7 +244,7 @@ server <- function(input,output, session) {
     categoryDataset <- full_join(categoryDataset,twelve_hours) %>% mutate_each(funs(ifelse(is.na(.),0,.)))%>% arrange(date)
     categoryDataset$date <- as.POSIXct(categoryDataset$date,tz='UTC',origin = "1970-01-01")
     
-    if(nrow(dataset) == 0) return(NULL)
+    if(nrow(dataset) == 0) stop('no dataset found.')
     
     thisplot <- categoryDataset %>% filter(category == input$category) %>%
       ggplot(aes(date, value)) +
@@ -239,9 +279,9 @@ server <- function(input,output, session) {
     }
     
     dataset <- getTimeFilteredDataset()
-    if(is.null(dataset)) return(NULL)
+    if(is.null(dataset)) stop('no dataset found.')
     categoryDataset <- getTimeFilteredCategoryDataset()
-    if(is.null(categoryDataset)) return(NULL)
+    if(is.null(categoryDataset)) stop('no dataset found.')
     minDate = min(categoryDataset$date)
     maxDate = min(categoryDataset$date)
     categories <- dataset %>% group_by(category) %>% summarise(perCat = sum(value))
@@ -255,10 +295,6 @@ server <- function(input,output, session) {
     
   }, height = 1200)
   
-  
-  
-  output$summaryTable <- DT::renderDataTable(expr = {DT::datatable(selectedPoints())}, selection = 'single')
-  
   data_to_display<-eventReactive(input$summaryTable_rows_selected,ignoreNULL=TRUE,
                                  getRawDataForSample()
   )
@@ -266,6 +302,16 @@ server <- function(input,output, session) {
   output$rawtable<-DT::renderDataTable(data_to_display(),options = list(
     pageLength = 25,order = list(list(1, 'asc'))))
   
+  
+  output$twitteranomalies <- renderPlot({
+    withProgress({
+      source("R/anomaly_detection.R")
+      dataset <- getTimeFilteredCategoryDataset()
+      if(is.null(dataset)) stop('no dataset found.')
+      res <- find_anomalies_twitter(dataset)
+      res$plot
+    },message = 'Finding anomalies...')
+  })
   
   output$mydownload <- downloadHandler(
     filename = function(){
