@@ -295,6 +295,9 @@ server <- function(input,output, session) {
     
   }, height = 1200)
   
+  output$summaryTable <- DT::renderDataTable(expr = {DT::datatable(selectedPoints())}, selection = 'single',server = F)
+  
+  
   data_to_display<-eventReactive(input$summaryTable_rows_selected,ignoreNULL=TRUE,
                                  getRawDataForSample()
   )
