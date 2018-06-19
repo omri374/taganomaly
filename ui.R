@@ -88,7 +88,7 @@ body <- dashboardBody(
     #          h5("Might take a while to load..."),
     #          plotOutput('facebookanomalies')
              
-    )
+    #)
   )
   
   
