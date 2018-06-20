@@ -1,62 +1,58 @@
 {
-    "$schema": "https://schema.management.azure.com/schemas/2015-01-01/deploymentTemplate.json#",
-    "contentVersion": "1.0.0.0",
-    "parameters": {   
-      "appName": {
-        "defaultValue": "taganomaly",
-        "type": "string"
+  "$schema": "https://schema.management.azure.com/schemas/2015-01-01/deploymentTemplate.json#",
+  "contentVersion": "1.0.0.0",
+  "parameters": {
+      "containerGroups_taganomaly_name": {
+          "defaultValue": "taganomaly",
+          "type": "String"
       }
-    },
-    "variables": {
-      "servicePlanName": "[concat('serviceplan',uniqueString(resourceGroup().id))]"
-    },
-    "resources": [
+  },
+  "variables": {},
+  "resources": [
       {
-        "type": "Microsoft.Web/serverfarms",
-        "name": "[variables('servicePlanName')]",
-        "apiVersion": "2016-03-01",
-        "location": "[resourceGroup().location]",
-        "sku": {
-          "name": "S1",
-          "capacity": 1
-        },
-        "kind": "linux",
-        "properties": {
-          "workerSizeId": 0,
-          "reserved": true,
-          "hostingEnvironment": ""
-        }
-      },
-      {
-        "type": "Microsoft.Web/sites",
-        "name": "[parameters('appName')]",
-        "apiVersion": "2016-03-01",
-        "location": "[resourceGroup().location]",
-        "properties": {
-          "name": "[parameters('appName')]",
-          "serverFarmId": "[resourceId('Microsoft.Web/serverfarms', variables('servicePlanName'))]"
-        },
-        "dependsOn": [
-          "[resourceId('Microsoft.Web/serverfarms', variables('servicePlanName'))]"
-        ],
-        "resources": [
-          {
-            "name": "appsettings",
-            "type": "config",
-            "apiVersion": "2016-03-01",
-            "dependsOn": [
-              "[resourceId('Microsoft.Web/sites', parameters('appName'))]"
-            ],
-            "tags": {
-              "displayName": "appSettings"
-            },
-            "properties": {
-              "WEBSITES_PORT":3838,
-              "DOCKER_CUSTOM_IMAGE_NAME": "omri374/taganomaly",
-              "DOCKER_CUSTOM_IMAGE_RUN_COMMAND": "omri374/taganomaly"
-            }
-          }
-        ]
+          "comments": "Generalized from resource: '/subscriptions/73a4ea93-d914-424d-9e64-28adf397e8e3/resourceGroups/om-taga/providers/Microsoft.ContainerInstance/containerGroups/taganomaly'.",
+          "type": "Microsoft.ContainerInstance/containerGroups",
+          "name": "[parameters('containerGroups_taganomaly_name')]",
+          "apiVersion": "2018-04-01",
+          "location": "westeurope",
+          "scale": null,
+          "properties": {
+              "containers": [
+                  {
+                      "name": "[parameters('containerGroups_taganomaly_name')]",
+                      "properties": {
+                          "image": "[concat('omri374/', parameters('containerGroups_taganomaly_name'))]",
+                          "command": [],
+                          "ports": [
+                              {
+                                  "protocol": "TCP",
+                                  "port": 3838
+                              }
+                          ],
+                          "environmentVariables": [],
+                          "resources": {
+                              "requests": {
+                                  "memoryInGB": 4,
+                                  "cpu": 2
+                              }
+                          }
+                      }
+                  }
+              ],
+              "restartPolicy": "Always",
+              "ipAddress": {
+                  "ports": [
+                      {
+                          "protocol": "TCP",
+                          "port": 3838
+                      }
+                  ],
+                  "type": "Public",
+                  "dnsNameLabel": "[parameters('containerGroups_taganomaly_name')]"
+              },
+              "osType": "Linux"
+          },
+          "dependsOn": []
       }
-    ]
+  ]
 }
