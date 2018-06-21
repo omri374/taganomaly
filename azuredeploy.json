@@ -21,7 +21,7 @@
                   {
                       "name": "[parameters('containerGroups_taganomaly_name')]",
                       "properties": {
-                          "image": 'omri374/taganomaly",
+                          "image": "omri374/taganomaly",
                           "command": [],
                           "ports": [
                               {
