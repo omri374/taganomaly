@@ -4,8 +4,7 @@ Anomaly detection labeling tool, specifically for multiple time series (one time
 Taganamoly is a tool for creating labeled data for anomaly detection models. It allows the labeler to select points on a time series, further inspect them by looking at the behavior of other times series at the same time range, or by looking at the raw data that created this time series (assuming that the time series is an aggregated metric, counting events per time range)
 
 #### Click here to deploy as Web App on Azure:
-[![Deploy to Azure](https://azuredeploy.net/?repository=https://github.com/omri374/taganomaly")
-
+[![Deploy to Azure](http://azuredeploy.net/deploybutton.png)](https://azuredeploy.net/?repository=https://github.com/omri374/taganomaly)
 
 The app has three main windows:
 #### The labeling window
