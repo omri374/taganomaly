@@ -53,7 +53,7 @@ Option 1: [Deploy to Azure Web App for Containers](https://azuredeploy.net/). Mo
 Option 2: Deploy [this image](https://hub.docker.com/r/omri374/taganomaly/) to your own environment.
 
 ### Dockerize the shiny app yourself:
-Follow the steps on [rize](https://github.com/cole-brokamp/rize) on how to deploy on shiny-server. Default port is 3838, so make sure you have it open or change the default port to somethine else.
+Follow the steps on [rize](https://github.com/cole-brokamp/rize) on how to deploy on shiny-server. Default port is 3838, so make sure you have it open or change the default port to something else.
 
 
 ## Instructions of use
