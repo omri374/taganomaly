@@ -11,11 +11,7 @@ find_anomalies_twitter <- function(categoryDataset){
 
 
 find_anomalies_prophet <- function(categoryDataset){
-  if(!require(prophet)) install.packages('prophet')
-  library(prophet)
-  library(dplyr)
-  library(ggplot2)
-  
+  ## Requires the prophet package.
   df <- categoryDataset %>% transmute(ds = date,y = value)
   m <- prophet(df)
   future <- make_future_dataframe(m, periods = 1)

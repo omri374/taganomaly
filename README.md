@@ -22,6 +22,8 @@ The app has three main windows:
 #### Compare this category with others over time
 ![Compare](https://github.com/omri374/taganomaly/raw/master/assets/compare.png)
 
+#### Look at proposed anomalies using the Twitter AnomalyDetection package
+![Reference results](https://github.com/omri374/taganomaly/raw/master/assets/twitter.png)
 
 #### Look at the changes in distribution between categories
 This could be useful to understand whether an anomaly was univariate or multivariate

@@ -316,16 +316,7 @@ server <- function(input,output, session) {
     },message = 'Finding anomalies...')
   })
   
-  # output$facebookanomalies <- renderPlot({
-  #   withProgress({
-  #     source("R/anomaly_detection.R")
-  #     dataset <- getTimeFilteredCategoryDataset()
-  #     if(is.null(dataset)) stop('no dataset found.')
-  #     res <- find_anomalies_prophet(dataset)
-  #     plot(res)
-  #   },message = 'Finding anomalies...')
-  # })
-  
+
   output$mydownload <- downloadHandler(
     filename = function(){
       random_string <- paste0(paste0(sample(LETTERS,2 , TRUE),collapse=''),sample(999, 1, TRUE), paste0(sample(LETTERS,2 , TRUE),collapse=''),collapse = '')

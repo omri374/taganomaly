@@ -81,14 +81,6 @@ body <- dashboardBody(
              plotOutput('twitteranomalies')
              
     )
-    # ,
-    # tabPanel('Suggested anomalies (Facebook prophet model)',
-    #          h3("Based on Facebook's Prophet:"),
-    #          a('https://facebook.github.io/prophet/', href = 'https://facebook.github.io/prophet/'),
-    #          h5("Might take a while to load..."),
-    #          plotOutput('facebookanomalies')
-             
-    #)
   )
   
   
