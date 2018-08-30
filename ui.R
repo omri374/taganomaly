@@ -38,6 +38,7 @@ sidebar <- dashboardSidebar(
                 "text/comma-separated-values,text/plain",
                 ".csv")
     ),
+    #checkboxInput("header","My dataset has headers",value=TRUE),
     fileInput("rawfile", "Choose CSV File with raw data",
               accept = c(
                 "text/csv",
@@ -46,7 +47,7 @@ sidebar <- dashboardSidebar(
     ),
     uiOutput("category"),
     checkboxInput('interpolate',label = "Interpolate missing points",value = FALSE),
-    selectInput('breaks',"Select graph breaks",choices = c('1 sec','1 min','1 hour','1 day','1 week','1 month','1 year'),selected = '1 hour'),
+    selectInput('breaks',"Select graph breaks",choices = c('1 sec','1 min','1 hour','1 day','1 week','1 month','1 year'),selected = '1 year'),
     uiOutput('slider'),
     
     downloadButton(outputId = "mydownload", label = "Download labels set")
@@ -58,10 +59,12 @@ body <- dashboardBody(
   tabsetPanel(
     tabPanel("Current category",
              h2('Time Series for labeling:'),
+             h5("Graph might take a few moments to load"),
              plotOutput("plot", brush = "user_brush"),
              h2('Selected points:'),
              dataTableOutput("summaryTable"),
              h2('Inspect raw data:'),
+             h5('Select a point or more on the graph, then select a record on the \"Selected Points\" table to see raw data'),
              dataTableOutput("rawtable")
     ),
     tabPanel('All categories',
@@ -88,5 +91,5 @@ body <- dashboardBody(
 )
 
 
-dashboardPage(header, sidebar, body)
+dashboardPage(header, sidebar, body,skin = "red")
 
